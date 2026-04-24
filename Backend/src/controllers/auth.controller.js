@@ -37,31 +37,38 @@ async function registerUser(req, res) {
 }
 
 async function loginUser(req, res) {
-    const { email, password } = req.body;
+    console.log(req.body);
+    try {
+        const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ message: "Please provide email and password" });
+        if (!email || !password) {
+            return res.status(400).json({ message: "All fields required" });
+        }
+
+        const user = await userModel.findOne({ email });
+
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        res.status(200).json({
+            user: {
+                id: user._id,
+                email: user.email,
+            },
+        });
+
+    } catch (error) {
+        console.error("🔥 Login Error:", error);
+        res.status(500).json({ message: "Server error" });
     }
-
-    const user = await userModel.findOne({ email });
-    if (!user) {
-        return res.status(400).json({ message: "Invalid email or password" });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-        return res.status(400).json({ message: "Invalid email or password" });
-    }
-
-    const token = jwt.sign({ id: user._id, username: user.username }, process.env.JWT_SECRET, { expiresIn: "1d" });
-
-    res.cookie("token", token);
-
-    res.status(200).json({
-        message: "User logged in successfully",
-        user: { id: user._id, username: user.username, email: user.email }
-    });
-}
+};
 
 async function logoutUser(req, res) {
     const token = req.cookies.token;
@@ -77,6 +84,18 @@ async function logoutUser(req, res) {
     })
 }
 
+async function getMe(req, res) {
+    const user = await userModel.findById(req.user.id)
+
+    res.status(200).json({
+        message: "User details fetched successfully",
+        user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+        }
+    })
+}
 
 
-module.exports = { registerUser, loginUser, logoutUser };
+module.exports = { registerUser, loginUser, logoutUser, getMe};
