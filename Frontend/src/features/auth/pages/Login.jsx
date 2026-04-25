@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router";
 import { useAuth } from "../hooks/useAuth";
 
 const Login = () => {
-    // const navigate = useNavigate()
+    const navigate = useNavigate()
 
     const { loading, handleLogin } = useAuth()
 
@@ -12,7 +12,8 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        handleLogin({ email, password })
+        await handleLogin({ email, password });
+        navigate('/')
     }
 
     if (loading) {

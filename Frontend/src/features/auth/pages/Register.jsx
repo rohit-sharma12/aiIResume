@@ -1,12 +1,26 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate, Link } from "react-router";
+import { useAuth } from "../hooks/useAuth";
 
 const Register = () => {
     const navigate = useNavigate()
 
-    const handleSubmit = (e) => {
+    const { loading, handleRegister } = useAuth()
+
+    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        await handleLogin({ username, email, password });
+        navigate('/')
     }
+
+    if (loading) {
+        return (<main>Loading...</main>)
+    }
+
     return (
         <div className="min-h-screen flex items-center justify-center primary text-white">
             <div className="flex w-[900px] primary rounded-lg shadow-lg overflow-hidden">
@@ -22,6 +36,7 @@ const Register = () => {
                             <input
                                 type="username"
                                 placeholder="Enter User Name"
+                                onChange={(e) => { setUsername(e.target.value) }}
                                 className="w-full border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 py-2"
                             />
                         </div>
@@ -31,6 +46,7 @@ const Register = () => {
                             <input
                                 type="email"
                                 placeholder="Enter email"
+                                onChange={(e) => { setEmail(e.target.value) }}
                                 className="w-full border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 py-2"
                             />
                         </div>
@@ -40,6 +56,7 @@ const Register = () => {
                             <input
                                 type="password"
                                 placeholder="Enter password"
+                                onChange={(e) => { setPassword(e.target.value) }}
                                 className="w-full border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 py-2"
                             />
                         </div>
