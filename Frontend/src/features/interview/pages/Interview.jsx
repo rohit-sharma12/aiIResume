@@ -1,93 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useInterview } from '../hooks/useInterview.js'
+import { useNavigate, useParams } from 'react-router'
 
-const data = {
-  matchScore: 85,
-
-  technicalQuestions: [
-    {
-      question: "How do you optimize a slow MongoDB query?",
-      intention: "Evaluate DB optimization skills.",
-      answer:
-        "Use explain(), indexes, avoid full collection scan, and optimize aggregation.",
-    },
-  ],
-
-  behavioralQuestions: [
-    {
-      question: "Describe a time you solved a challenging bug.",
-      intention: "Test problem-solving ability.",
-      answer: "Used logs, debugging tools, and fixed a race condition.",
-    },
-  ],
-
-  preparationPlan: [
-    {
-      day: 1,
-      focus: "Node.js Internals & Streams",
-      tasks: [
-        "Deep dive into the Event Loop phases and process.nextTick vs setImmediate.",
-        "Practice implementing Node.js Streams for handling large data sets.",
-      ],
-    },
-    {
-      day: 2,
-      focus: "Advanced MongoDB & Indexing",
-      tasks: [
-        "Study Compound Indexes, TTL Indexes, and Text Indexes.",
-        "Practice writing complex Aggregation pipelines and using the .explain('executionStats') method.",
-      ],
-    },
-    {
-      day: 3,
-      focus: "Caching & Redis Strategies",
-      tasks: [
-        "Read about Redis data types beyond strings (Sets, Hashes, Sorted Sets).",
-        "Implement a Redis-based rate limiter or a caching layer for a sample API.",
-      ],
-    },
-    {
-      day: 4,
-      focus: "System Design & Microservices",
-      tasks: [
-        "Study Microservices communication patterns (Synchronous vs Asynchronous).",
-        "Learn about the API Gateway pattern and Circuit Breakers.",
-      ],
-    },
-    {
-      day: 5,
-      focus: "Message Queues & DevOps Basics",
-      tasks: [
-        "Watch introductory tutorials on RabbitMQ or Kafka.",
-        "Dockerize a project and write a simple GitHub Actions workflow for CI.",
-      ],
-    },
-    {
-      day: 6,
-      focus: "Data Structures & Algorithms",
-      tasks: [
-        "Solve 5–10 Medium LeetCode problems focusing on Arrays, Strings, and Hash Maps.",
-        "Review common sorting and searching algorithms.",
-      ],
-    },
-    {
-      day: 7,
-      focus: "Mock Interview & Project Review",
-      tasks: [
-        "Conduct a mock interview focusing on explaining the Real-time Chat Application architecture.",
-        "Review all previous topics and note down any weak areas for final revision.",
-      ],
-    },
-  ],
-
-  skillGaps: [
-    { skill: "System Design", severity: "high" },
-    { skill: "Docker", severity: "medium" },
-    { skill: "Redis", severity: "low" },
-  ],
-};
 
 const Interview = () => {
-  const [active, setActive] = useState("roadmap");
+  const [active, setActive] = useState("technical");
+  const [openIndex, setOpenIndex] = useState(null);
+  const { report, getReportById, loading, getResumePdf } = useInterview()
+  const { interviewId } = useParams()
+
+
+  useEffect(() => {
+    if (interviewId) {
+      getReportById(interviewId)
+    }
+  }, [interviewId])
+
+
+
+  if (loading || !report) {
+    return (
+      <main className='loading-screen'>
+        <h1>Loading your interview plan...</h1>
+      </main>
+    )
+  }
+
 
   return (
     <div className="min-h-screen bg-[#0b1220] text-white flex">
@@ -96,6 +34,11 @@ const Interview = () => {
       <div className="w-64 bg-[#0f172a] border-r border-gray-800 p-6 flex flex-col justify-between">
         <div>
           <ul className="space-y-3">
+            <li
+              className="font-bold txet-white"
+            >
+              Section
+            </li>
             <li
               onClick={() => setActive("technical")}
               className={`cursor-pointer px-3 py-2 rounded ${active === "technical"
@@ -157,7 +100,7 @@ const Interview = () => {
                 />
 
                 <div className="space-y-8">
-                  {data.preparationPlan.map((item) => (
+                  {report.preparationPlan.map((item) => (
                     <div key={item.day} className="relative flex gap-6 pl-2">
                       {/* Circle node */}
                       <div className="relative z-10 flex-shrink-0 mt-0.5">
@@ -203,37 +146,129 @@ const Interview = () => {
           {active === "technical" && (
             <>
               <h2 className="text-2xl font-semibold mb-6">Technical Questions</h2>
-              {data.technicalQuestions.map((q, i) => (
-                <div
-                  key={i}
-                  className="bg-[#111827] border border-gray-800 rounded-xl p-6 mb-4"
-                >
-                  <h3 className="text-lg font-semibold mb-4">{q.question}</h3>
-                  <p className="text-purple-400 text-sm font-semibold">INTENTION</p>
-                  <p className="text-gray-400 mb-4">{q.intention}</p>
-                  <p className="text-green-400 text-sm font-semibold">MODEL ANSWER</p>
-                  <p className="text-gray-300">{q.answer}</p>
-                </div>
-              ))}
+
+              {report.technicalQuestions.map((q, i) => {
+                const isOpen = openIndex === `tech-${i}`;
+
+                return (
+                  <div
+                    key={i}
+                    className="bg-[#111827] border border-gray-800 rounded-xl mb-4 overflow-hidden"
+                  >
+                    {/* HEADER */}
+                    <div
+                      onClick={() =>
+                        setOpenIndex(isOpen ? null : `tech-${i}`)
+                      }
+                      className="flex justify-between items-center p-5 cursor-pointer hover:bg-gray-800/40 transition"
+                    >
+                      <h3 className="text-lg font-medium">{q.question}</h3>
+                      <span className="text-purple-400">
+                        {isOpen ? "−" : "+"}
+                      </span>
+                    </div>
+
+                    {/* CONTENT */}
+                    {isOpen && (
+                      <div className="px-5 pb-6 pt-5 border-t border-gray-800 space-y-5">
+
+                        {/* INTENTION CARD */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+                            <p className="text-purple-400 text-xs font-semibold tracking-wide bg-purple-500/5 border border-purple-500/20 rounded-lg p-1 backdrop-blur-sm">
+                              INTENTION
+                            </p>
+                          </div>
+                          <p className="text-gray-300 text-sm leading-relaxed">
+                            {q.intention}
+                          </p>
+                        </div>
+
+                        {/* ANSWER CARD */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                            <p className="text-green-400 text-xs font-semibold tracking-wide bg-green-500/5 border border-green-500/20 rounded-lg p-1 backdrop-blur-sm">
+                              MODEL ANSWER
+                            </p>
+                          </div>
+                          <p className="text-gray-300 text-sm leading-relaxed">
+                            {q.answer}
+                          </p>
+                        </div>
+
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </>
           )}
 
           {/* BEHAVIORAL */}
           {active === "behavioral" && (
             <>
-              <h2 className="text-2xl font-semibold mb-6">Behavioral Questions</h2>
-              {data.behavioralQuestions.map((q, i) => (
-                <div
-                  key={i}
-                  className="bg-[#111827] border border-gray-800 rounded-xl p-6 mb-4"
-                >
-                  <h3 className="text-lg font-semibold mb-4">{q.question}</h3>
-                  <p className="text-purple-400 text-sm font-semibold">INTENTION</p>
-                  <p className="text-gray-400 mb-4">{q.intention}</p>
-                  <p className="text-green-400 text-sm font-semibold">MODEL ANSWER</p>
-                  <p className="text-gray-300">{q.answer}</p>
-                </div>
-              ))}
+              <h2 className="text-2xl font-semibold mb-6">
+                Behavioral Questions
+              </h2>
+
+              {report.behavioralQuestions.map((q, i) => {
+                const isOpen = openIndex === `beh-${i}`;
+
+                return (
+                  <div
+                    key={i}
+                    className="bg-[#111827] border border-gray-800 rounded-xl mb-4 overflow-hidden"
+                  >
+                    {/* HEADER */}
+                    <div
+                      onClick={() =>
+                        setOpenIndex(isOpen ? null : `beh-${i}`)
+                      }
+                      className="flex justify-between items-center p-5 cursor-pointer hover:bg-gray-800/40 transition"
+                    >
+                      <h3 className="text-lg font-medium">{q.question}</h3>
+                      <span className="text-purple-400">
+                        {isOpen ? "−" : "+"}
+                      </span>
+                    </div>
+
+                    {/* CONTENT */}
+                    {isOpen && (
+                      <div className="px-5 pb-6 pt-5 border-t border-gray-800 space-y-5">
+
+                        {/* INTENTION CARD */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+                            <p className="text-purple-400 text-xs p-1 font-semibold tracking-wide border rounded-lg bg-purple-500/5 border-purple-500/20  backdrop-blur-sm">
+                              INTENTION
+                            </p>
+                          </div>
+                          <p className="text-gray-300 text-sm leading-relaxed">
+                            {q.intention}
+                          </p>
+                        </div>
+
+                        {/* ANSWER CARD */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                            <p className="text-green-400 text-xs font-semibold tracking-wide bg-green-500/5 border border-green-500/20 rounded-lg p-1 backdrop-blur-sm">
+                              MODEL ANSWER
+                            </p>
+                          </div>
+                          <p className="text-gray-300 text-sm leading-relaxed">
+                            {q.answer}
+                          </p>
+                        </div>
+
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </>
           )}
         </div>
@@ -243,21 +278,21 @@ const Interview = () => {
 
           {/* MATCH SCORE */}
           <div className="bg-[#111827] border border-gray-800 rounded-xl p-6 text-center">
-            <h3 className="text-gray-400 text-sm mb-4">MATCH SCORE</h3>
+            <h3 className="text-gray-400 text-sm mb-4 font-extrabold">MATCH SCORE</h3>
             <div className="w-28 h-28 mx-auto rounded-full border-4 border-purple-500 flex items-center justify-center text-2xl font-bold">
-              {data.matchScore}%
+              {report.matchScore}%
             </div>
             <p className="text-purple-400 mt-3 text-sm">Strong match profile</p>
           </div>
 
           {/* SKILL GAPS */}
           <div className="bg-[#111827] border border-gray-800 rounded-xl p-6">
-            <h3 className="text-gray-400 text-sm mb-4">SKILL GAPS</h3>
+            <h3 className="text-gray-400 text-sm mb-4 font-bold">SKILL GAPS</h3>
             <div className="space-y-3">
-              {data.skillGaps.map((gap, i) => (
+              {report.skillGaps.map((gap, i) => (
                 <div
                   key={i}
-                  className="bg-purple-500/10 text-purple-300 px-3 py-2 rounded text-sm"
+                  className="bg-red-500/10 text-white px-3 py-2 rounded text-sm"
                 >
                   {gap.skill}
                 </div>
@@ -266,7 +301,7 @@ const Interview = () => {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
