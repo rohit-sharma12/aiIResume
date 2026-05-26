@@ -1,4 +1,4 @@
-# 🤖 AI Resume Backend (aiIResume)
+# 🤖 AI Resume Backend (aiResume)
 
 This is a backend system for an **AI-powered Resume Application**, where users can securely register, authenticate, and prepare for AI-driven resume generation and analysis features.
 
